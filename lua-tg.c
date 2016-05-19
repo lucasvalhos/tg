@@ -289,6 +289,9 @@ void push_media (struct tgl_message_media *M) {
     break;
   case tgl_message_media_document:
   case tgl_message_media_audio:
+    lua_newtable (luaState);
+    lua_add_string_field ("type", "audio");
+    break;
   case tgl_message_media_video:
   case tgl_message_media_document_encr:
     lua_newtable (luaState);
@@ -1207,6 +1210,20 @@ void lua_do_all (void) {
     case lq_load_photo:
     case lq_load_video:
     case lq_load_audio:
+      
+      M = tgl_message_get (TLS, &lua_ptr[p + 1].msg_id);
+ 
+      if (M->media.type == tgl_message_media_audio) {
+        assert (M->media.document);
+        tgl_do_load_document (TLS, M->media.document, lua_file_cb, lua_ptr[p].ptr);
+      } else {
+        tgl_do_load_encr_document (TLS, M->media.encr_document, lua_file_cb, lua_ptr[p].ptr);
+      }
+      
+      p += 2;
+      
+      break;
+      
     case lq_load_document:
       M = tgl_message_get (TLS, &lua_ptr[p + 1].msg_id);
       if (!M || (M->media.type != tgl_message_media_photo && M->media.type != tgl_message_media_document && M->media.type != tgl_message_media_document_encr)) {
